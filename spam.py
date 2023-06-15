@@ -7,7 +7,7 @@ import os
 import time
 import yaml
 
-from nio import AsyncClient
+from nio import AsyncClient, AsyncClientConfig
 from nio.responses import RoomCreateResponse, JoinedRoomsResponse
 from nio.event_builders.state_events import EnableEncryptionBuilder
 
@@ -18,9 +18,9 @@ this_dir = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspe
 def rp(path):
     return os.path.join(this_dir, path)
 
-#work_dir = rp(".data")
-#if not os.path.exists(work_dir):
-#    os.makedirs(work_dir)
+work_dir = rp(".data")
+if not os.path.exists(work_dir):
+    os.makedirs(work_dir)
 
 
 with open(rp('config.yaml')) as fin:
@@ -39,6 +39,8 @@ HANDLED_ROOM_NAME_PREFIX = "room-spam-"
 ENCRYPTION_DICT = EnableEncryptionBuilder().as_dict()
 ROOM_CREATION_DICTS = [ENCRYPTION_DICT]
 
+bot_mxid = config["mx_id"]
+
 
 this_run_id = str(int(time.time()))
 
@@ -47,16 +49,42 @@ def is_handled_room_id(client, room_id):
         name = client.rooms[room_id].named_room_name()
         return name != None and name.startswith(HANDLED_ROOM_NAME_PREFIX)
     except KeyError:
+        print(f"Could not look up room name for {room_id}")
         return False
 
 async def main():
-    client = AsyncClient(config["homeserver"], config["mx_id"], config["device_id"])
+    client_config = AsyncClientConfig(
+        max_limit_exceeded=0,
+        max_timeouts=0,
+        store_sync_tokens=False,
+        encryption_enabled=True,
+    )
+    client = AsyncClient(config["homeserver"], bot_mxid, config["device_id"], store_path=work_dir, config=client_config)
     try:
-        client.user_id = config["mx_id"]
-        client.device_id = config["device_id"]
-        client.access_token = config["token"]
+        client.restore_login(bot_mxid, config["device_id"], config["token"])
+        client.load_store()
+
+        # Sync encryption keys with the server
+        # Required for participating in encrypted rooms
+        if client.should_upload_keys:
+            await client.keys_upload()
+
         print("Sync...")
         await client.sync()
+
+        # Trust all devices of the bot mxid running this script
+        # From: https://matrix-nio.readthedocs.io/en/latest/examples.html
+        # The device store contains a dictionary of device IDs and known
+        # OlmDevices for all users that share a room with us, including us.
+        # We can only run this after a first sync. We have to populate our
+        # device store and that requires syncing with the server.
+        print(f"Known devices: {client.device_store[bot_mxid].keys()}")
+        for device_id, olm_device in client.device_store[bot_mxid].items():
+            if device_id == client.device_id:
+                # We cannot explicitly trust ourselves
+                continue
+            client.verify_device(olm_device)
+            print(f"Trusting {device_id}")
 
         # Create new rooms
         create_count = min(args.create[0], 50)
