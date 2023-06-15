@@ -1,0 +1,5 @@
+# Note: since you will spam a lot of rooms, better do not do this on any productive matrix server!
+homeserver: "https://my-matrix-test-server.com"
+mx_id: "@bot:my-matrix-test-server.com"
+device_id: 'matrix-spam-util'
+token: 'syt_...'
