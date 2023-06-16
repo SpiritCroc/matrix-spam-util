@@ -30,9 +30,10 @@ parser = argparse.ArgumentParser(description="Stress test matrix clients. Do not
 #parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 parser.add_argument("-c", "--create", type=int, nargs=1, metavar="number", default=[0], help="Number of new rooms to create")
 parser.add_argument("-m", "--message", type=int, nargs=1, metavar="number", default=[0], help="Number of messages to send in the rooms")
+parser.add_argument("-s", "--sleep", type=float, nargs=1, metavar="number", default=[0.1], help="Sleep delay between spamy calls")
 args = parser.parse_args()
 
-sleep_delay=0.1
+sleep_delay = args.sleep[0]
 
 HANDLED_ROOM_NAME_PREFIX = "room-spam-"
 
