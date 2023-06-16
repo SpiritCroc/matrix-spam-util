@@ -57,7 +57,7 @@ async def main():
         max_limit_exceeded=0,
         max_timeouts=0,
         store_sync_tokens=False,
-        encryption_enabled=True,
+        encryption_enabled=config["encryption_enabled"],
     )
     client = AsyncClient(config["homeserver"], bot_mxid, config["device_id"], store_path=work_dir, config=client_config)
     try:
@@ -78,13 +78,14 @@ async def main():
         # OlmDevices for all users that share a room with us, including us.
         # We can only run this after a first sync. We have to populate our
         # device store and that requires syncing with the server.
-        print(f"Known devices: {client.device_store[bot_mxid].keys()}")
-        for device_id, olm_device in client.device_store[bot_mxid].items():
-            if device_id == client.device_id:
-                # We cannot explicitly trust ourselves
-                continue
-            client.verify_device(olm_device)
-            print(f"Trusting {device_id}")
+        if client_config.encryption_enabled:
+            print(f"Known devices: {client.device_store[bot_mxid].keys()}")
+            for device_id, olm_device in client.device_store[bot_mxid].items():
+                if device_id == client.device_id:
+                    # We cannot explicitly trust ourselves
+                    continue
+                client.verify_device(olm_device)
+                print(f"Trusting {device_id}")
 
         # Create new rooms
         create_count = min(args.create[0], 50)

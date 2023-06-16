@@ -3,3 +3,5 @@ homeserver: "https://my-matrix-test-server.com"
 mx_id: "@bot:my-matrix-test-server.com"
 device_id: 'matrix-spam-util'
 token: 'syt_...'
+# Whether to encrypt sent messages
+encryption_enabled: true
