@@ -22,16 +22,16 @@ work_dir = rp(".data")
 if not os.path.exists(work_dir):
     os.makedirs(work_dir)
 
-
-with open(rp('config.yaml')) as fin:
-    config = yaml.full_load(fin)
-
 parser = argparse.ArgumentParser(description="Stress test matrix clients. Do not run as normal user!")
 #parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-parser.add_argument("-c", "--create", type=int, nargs=1, metavar="number", default=[0], help="Number of new rooms to create")
+parser.add_argument("-c", "--config", type=str, nargs=1, metavar="number", default=[rp('config.yaml')], help="Config file")
+parser.add_argument("-r", "--create", type=int, nargs=1, metavar="number", default=[0], help="Number of new rooms to create")
 parser.add_argument("-m", "--message", type=int, nargs=1, metavar="number", default=[0], help="Number of messages to send in the rooms")
 parser.add_argument("-s", "--sleep", type=float, nargs=1, metavar="number", default=[0.1], help="Sleep delay between spamy calls")
 args = parser.parse_args()
+
+with open(args.config[0]) as fin:
+    config = yaml.full_load(fin)
 
 sleep_delay = args.sleep[0]
 
