@@ -34,7 +34,6 @@ if [ -z "$activity" ]; then
     # Guess activity from launcher intent
     adb shell monkey -p "$package" -c android.intent.category.LAUNCHER 1
 else
-    # TODO fix me?
     adb shell am start -n "$package"/"$activity"
 fi
 
